@@ -137,12 +137,14 @@ app.get('/queue-status', (req, res) => {
     res.json({ queue: tradeQueue, length: tradeQueue.length });
 });
 
+app.post('/clear-queue', (req, res) => {
+  tradeQueue.length = 0;
+  console.log(`[${new Date().toISOString()}] Queue cleared`);
+  res.json({ success: true, message: 'Queue cleared' });
+});
+
 app.listen(port, () => {
     console.log(`✅ JobId Listener API running at http://localhost:${port}`);
 });
 
-app.post('/clear-queue', (req, res) => {
-  tradeQueue.length = 0;
-  console.log(`[${new Date().toISOString()}] Queue cleared`);
-  res.json({ success: true, message: "Queue cleared" });
-});
+
