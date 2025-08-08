@@ -106,21 +106,15 @@ app.post('/enqueue', (req, res) => {
 
 app.post('/dequeue', (req, res) => {
     const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Missing name' });
-
-    if (tradeStatus.get(name) !== 'done') {
-        return res.status(403).json({ error: 'Cannot dequeue: trade not marked as done' });
-    }
-
-    const index = tradeQueue.indexOf(name);
+    console.log(`[${new Date().toISOString()}] Received dequeue request for`, name);
+    const index = tradeQueue.findIndex(p => p.name === name);
     if (index !== -1) {
         tradeQueue.splice(index, 1);
         tradeStatus.delete(name);
-        console.log(`[${new Date().toISOString()}] ${name} removed from queue`);
-        return res.json({ success: true, message: 'Removed from queue' });
+        console.log(`[${new Date().toISOString()}] Removed ${name} from queue`);
+        return res.json({ success: true });
     }
-
-    res.status(404).json({ error: 'Name not found in queue' });
+    res.json({ success: false, message: 'Player not found in queue' });
 });
 
 
@@ -166,3 +160,4 @@ app.post('/clear-queue', (req, res) => {
 app.listen(port, () => {
     console.log(`✅ JobId Listener API running at http://localhost:${port}`);
 });
+
