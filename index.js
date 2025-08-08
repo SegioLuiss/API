@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const fs = require('fs');
+const tradeStatus = new Map();
+
 
 app.use(express.json());
 
@@ -44,7 +46,18 @@ app.post('/set-jobid', (req, res) => {
 
     res.json({ message: 'JobId saved successfully', jobId: latestJobId, canJoin });
 });
+app.post('/mark-done', (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Missing name' });
 
+    if (!tradeQueue.includes(name)) {
+        return res.status(404).json({ error: 'Name not in queue' });
+    }
+
+    tradeStatus.set(name, 'done');
+    console.log(`[${new Date().toISOString()}] ${name} marked as done`);
+    res.json({ success: true });
+});
 app.get('/receivers', (req, res) => {
     const result = {};
     for (const [name, status] of receiverStatusMap.entries()) {
@@ -95,15 +108,21 @@ app.post('/dequeue', (req, res) => {
     const { name } = req.body;
     if (!name) return res.status(400).json({ error: 'Missing name' });
 
+    if (tradeStatus.get(name) !== 'done') {
+        return res.status(403).json({ error: 'Cannot dequeue: trade not marked as done' });
+    }
+
     const index = tradeQueue.indexOf(name);
     if (index !== -1) {
         tradeQueue.splice(index, 1);
+        tradeStatus.delete(name);
         console.log(`[${new Date().toISOString()}] ${name} removed from queue`);
         return res.json({ success: true, message: 'Removed from queue' });
     }
 
     res.status(404).json({ error: 'Name not found in queue' });
 });
+
 
 app.get('/queue-position/:name', (req, res) => {
     const name = req.params.name;
@@ -139,12 +158,11 @@ app.get('/queue-status', (req, res) => {
 
 app.post('/clear-queue', (req, res) => {
   tradeQueue.length = 0;
-  console.log(`[${new Date().toISOString()}] Queue cleared`);
+  tradeStatus.clear();
+  console.log(`[${new Date().toISOString()}] Queue and status cleared`);
   res.json({ success: true, message: 'Queue cleared' });
 });
 
 app.listen(port, () => {
     console.log(`✅ JobId Listener API running at http://localhost:${port}`);
 });
-
-
