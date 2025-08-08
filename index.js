@@ -5,6 +5,7 @@ const fs = require('fs');
 const tradeStatus = new Map();
 
 
+
 app.use(express.json());
 
 function saveJobId(jobId, canJoin) {
@@ -107,7 +108,7 @@ app.post('/enqueue', (req, res) => {
 app.post('/dequeue', (req, res) => {
     const { name } = req.body;
     console.log(`[${new Date().toISOString()}] Received dequeue request for`, name);
-    const index = tradeQueue.findIndex(p => p.name === name);
+    const index = tradeQueue.indexOf(name);
     if (index !== -1) {
         tradeQueue.splice(index, 1);
         tradeStatus.delete(name);
@@ -116,6 +117,7 @@ app.post('/dequeue', (req, res) => {
     }
     res.json({ success: false, message: 'Player not found in queue' });
 });
+
 
 
 app.get('/queue-position/:name', (req, res) => {
@@ -160,4 +162,5 @@ app.post('/clear-queue', (req, res) => {
 app.listen(port, () => {
     console.log(`✅ JobId Listener API running at http://localhost:${port}`);
 });
+
 
